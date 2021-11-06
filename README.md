@@ -15,7 +15,8 @@ open,high,low,close,volume
 
 ## Into volume bars (OHLCV)
 
-```csopen,high,low,close,volume
+```csv
+open,high,low,close,volume
 17.83,18.79,17.78,18.37,5
 17.83,18.79,17.27,17.48,5
 17.74,18.62,17.27,18.13,5
