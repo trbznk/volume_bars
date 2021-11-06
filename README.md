@@ -1,6 +1,6 @@
 # Volume Bars
 
-An implementatio of volume bars in rust.
+An implementation of volume bars in rust.
 
 ## Turn time bars (OHLCV)
 
