@@ -4,6 +4,7 @@ use std::io::{BufRead, BufReader};
 
 const SOURCE_FILE: &str = "bars.csv";
 const TARGET_FILE: &str = "volume_bars.csv";
+const OHLCV_COLUMNS: &str = "open,high,low,close,volume";
 const BAR_SIZE: usize = 5;
 
 #[derive(Debug)]
@@ -35,7 +36,7 @@ fn read_ohlcv(path: &str) -> Vec<Bar> {
     let mut columns = String::new();
     let len = reader.read_line(&mut columns).unwrap();
     columns.remove(len-1);
-    assert_eq!(columns, "open,high,low,close,volume");
+    assert_eq!(columns, OHLCV_COLUMNS);
 
     let mut bars: Vec<Bar> = Vec::new();
     for line in reader.lines() {
@@ -49,8 +50,26 @@ fn read_ohlcv(path: &str) -> Vec<Bar> {
             volume: line_cols[4].parse::<usize>().unwrap()
         });
     }
-
     bars
+}
+
+fn write_ohlcv(path: &str, bars: Vec<Bar>) {
+    let columns_row = format!("{}\n", OHLCV_COLUMNS);
+    let mut contents = String::from(columns_row);
+    for bar in bars.iter().rev() {
+        let row = format!(
+            "{},{},{},{},{}\n",
+            bar.open.to_string(),
+            bar.high.to_string(),
+            bar.low.to_string(),
+            bar.close.to_string(),
+            bar.volume.to_string(),
+        );
+        contents.push_str(&row);
+    }
+
+    fs::write(path, contents)
+        .expect("Unable to write file");
 }
 
 fn main() {
@@ -79,7 +98,6 @@ fn main() {
             if temp_volume_bar.low.is_sign_negative() || bars[i].low < temp_volume_bar.low {
                 temp_volume_bar.low = bars[i].low;
             }
-    
             if temp_volume_bar.volume == BAR_SIZE {
                 volume_bars.push(temp_volume_bar);
                 temp_volume_bar = Bar::new();
@@ -97,19 +115,5 @@ fn main() {
         volume_bars.push(temp_volume_bar);
     }
 
-    let mut contents = String::from("open,high,low,close,volume\n");
-    for bar in volume_bars.iter().rev() {
-        let row = format!(
-            "{},{},{},{},{}\n",
-            bar.open.to_string(),
-            bar.high.to_string(),
-            bar.low.to_string(),
-            bar.close.to_string(),
-            bar.volume.to_string(),
-        );
-        contents.push_str(&row);
-    }
-
-    fs::write(TARGET_FILE, contents)
-        .expect("Unable to write file");
+    write_ohlcv(TARGET_FILE, volume_bars);
 }
