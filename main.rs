@@ -57,9 +57,10 @@ fn main() {
     let mut bars = read_ohlcv(SOURCE_FILE);
     let mut volume_bars: Vec<Bar> = Vec::new();
     let mut temp_volume_bar = Bar::new();
-    let mut i = 0;
+    let mut i = bars.len()-1;
+    let mut is_ready = false;
 
-    while i < bars.len() {
+    while !is_ready {
         if bars[i].volume > 0 {
             temp_volume_bar.volume = temp_volume_bar.volume+bars[i].volume;
             if temp_volume_bar.volume >= BAR_SIZE {
@@ -85,7 +86,11 @@ fn main() {
             }
         } else {
             temp_volume_bar.close = bars[i].close;
-            i = i+1;
+            if i == 0 {
+                is_ready = true;
+            } else {
+                i = i-1;
+            }
         } 
     }
     if temp_volume_bar.volume < BAR_SIZE {
@@ -93,7 +98,7 @@ fn main() {
     }
 
     let mut contents = String::from("open,high,low,close,volume\n");
-    for bar in volume_bars.iter() {
+    for bar in volume_bars.iter().rev() {
         let row = format!(
             "{},{},{},{},{}\n",
             bar.open.to_string(),
