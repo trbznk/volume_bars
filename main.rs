@@ -26,6 +26,17 @@ impl Bar {
             volume: 0
         }
     }
+
+    fn print(&self) -> String {
+        format!(
+            "{},{},{},{},{}\n",
+            self.open.to_string(),
+            self.high.to_string(),
+            self.low.to_string(),
+            self.close.to_string(),
+            self.volume.to_string(),
+        )
+    }
 }
 
 fn read_ohlcv(path: &str) -> Vec<Bar> {
@@ -57,15 +68,7 @@ fn write_ohlcv(path: &str, bars: Vec<Bar>) {
     let columns_row = format!("{}\n", OHLCV_COLUMNS);
     let mut contents = String::from(columns_row);
     for bar in bars.iter().rev() {
-        let row = format!(
-            "{},{},{},{},{}\n",
-            bar.open.to_string(),
-            bar.high.to_string(),
-            bar.low.to_string(),
-            bar.close.to_string(),
-            bar.volume.to_string(),
-        );
-        contents.push_str(&row);
+        contents.push_str(&bar.print());
     }
 
     fs::write(path, contents)
