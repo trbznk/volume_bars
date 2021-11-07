@@ -15,6 +15,18 @@ struct Bar {
     volume: usize
 }
 
+impl Bar {
+    fn new() -> Bar {
+        Bar {
+            open: -1.0,
+            high: -1.0,
+            low: -1.0,
+            close: -1.0,
+            volume: 0
+        }
+    }
+}
+
 fn read_ohlcv(path: &str) -> Vec<Bar> {
     let f = File::open(path)
         .expect("cant read source file");
@@ -44,59 +56,40 @@ fn read_ohlcv(path: &str) -> Vec<Bar> {
 fn main() {
     let mut bars = read_ohlcv(SOURCE_FILE);
     let mut volume_bars: Vec<Bar> = Vec::new();
-    let (mut open, mut high, mut low, mut close): (f32, f32, f32 , f32) = (-1.0, -1.0, -1.0, -1.0);
-    let mut volume: usize = 0;
+    let mut temp_volume_bar = Bar::new();
     let mut i = 0;
 
     while i < bars.len() {
         if bars[i].volume > 0 {
-            volume = volume+bars[i].volume;
-            if volume >= BAR_SIZE {
-                bars[i].volume = volume-BAR_SIZE;
-                volume = BAR_SIZE;
-                close = bars[i].close;
+            temp_volume_bar.volume = temp_volume_bar.volume+bars[i].volume;
+            if temp_volume_bar.volume >= BAR_SIZE {
+                bars[i].volume = temp_volume_bar.volume-BAR_SIZE;
+                temp_volume_bar.volume = BAR_SIZE;
+                temp_volume_bar.close = bars[i].close;
             } else {
                 bars[i].volume = 0;
             }
-            if open.is_sign_negative() {
-                open = bars[i].open;
+            if temp_volume_bar.open.is_sign_negative() {
+                temp_volume_bar.open = bars[i].open;
             }
-            if high.is_sign_negative() || bars[i].high > high {
-                high = bars[i].high;
+            if temp_volume_bar.high.is_sign_negative() || bars[i].high > temp_volume_bar.high {
+                temp_volume_bar.high = bars[i].high;
             }
-            if low.is_sign_negative() || bars[i].low < low {
-                low = bars[i].low;
+            if temp_volume_bar.low.is_sign_negative() || bars[i].low < temp_volume_bar.low {
+                temp_volume_bar.low = bars[i].low;
             }
     
-            if volume == BAR_SIZE {
-                let volume_bar = Bar {
-                    open: open,
-                    high: high,
-                    low: low,
-                    close: close,
-                    volume: volume
-                };
-                volume_bars.push(volume_bar);
-                open = -1.0;
-                high = -1.0;
-                low = -1.0;
-                close = -1.0;
-                volume = 0;
+            if temp_volume_bar.volume == BAR_SIZE {
+                volume_bars.push(temp_volume_bar);
+                temp_volume_bar = Bar::new();
             }
         } else {
-            close = bars[i].close;
+            temp_volume_bar.close = bars[i].close;
             i = i+1;
         } 
     }
-    if volume < BAR_SIZE {
-        let volume_bar = Bar {
-            open: open,
-            high: high,
-            low: low,
-            close: close,
-            volume: volume
-        };
-        volume_bars.push(volume_bar);
+    if temp_volume_bar.volume < BAR_SIZE {
+        volume_bars.push(temp_volume_bar);
     }
 
     let mut contents = String::from("open,high,low,close,volume\n");
