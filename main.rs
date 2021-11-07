@@ -1,8 +1,10 @@
 use std::fs;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 const SOURCE_FILE: &str = "bars.csv";
 const TARGET_FILE: &str = "volume_bars.csv";
-const BAR_SIZE: usize = 5; 
+const BAR_SIZE: usize = 5;
 
 #[derive(Debug)]
 struct Bar {
@@ -13,31 +15,34 @@ struct Bar {
     volume: usize
 }
 
-fn main() {
-    let contents = fs::read_to_string(SOURCE_FILE)
-        .expect("Something went wrong reading the file");
+fn read_ohlcv(path: &str) -> Vec<Bar> {
+    let f = File::open(path)
+        .expect("cant read source file");
+    let mut reader = BufReader::new(f);
 
-    let lines = contents.split("\n").collect::<Vec<&str>>();
-    let n_lines = lines.len();
+    let mut columns = String::new();
+    let len = reader.read_line(&mut columns).unwrap();
+    columns.remove(len-1);
+    assert_eq!(columns, "open,high,low,close,volume");
 
     let mut bars: Vec<Bar> = Vec::new();
-    let columns: Vec<&str> = lines[0].split(",").collect::<Vec<&str>>();
-    assert_eq!(columns, ["open", "high", "low", "close", "volume"]);
-
-    for i in 1..n_lines {
-        let line = lines[i].split(",").collect::<Vec<&str>>();
-        if line.len() == 5 {
-            let bar = Bar {
-                open: line[0].parse::<f32>().unwrap(),
-                high: line[1].parse::<f32>().unwrap(),
-                low: line[2].parse::<f32>().unwrap(),
-                close: line[3].parse::<f32>().unwrap(),
-                volume: line[4].parse::<usize>().unwrap()
-            };
-            bars.push(bar);
-        }
+    for line in reader.lines() {
+        let temp_line = line.unwrap();
+        let line_cols: Vec<&str> = temp_line.split(",").collect();
+        bars.push(Bar {
+            open: line_cols[0].parse::<f32>().unwrap(),
+            high: line_cols[1].parse::<f32>().unwrap(),
+            low: line_cols[2].parse::<f32>().unwrap(),
+            close: line_cols[3].parse::<f32>().unwrap(),
+            volume: line_cols[4].parse::<usize>().unwrap()
+        });
     }
 
+    bars
+}
+
+fn main() {
+    let mut bars = read_ohlcv(SOURCE_FILE);
     let mut volume_bars: Vec<Bar> = Vec::new();
     let (mut open, mut high, mut low, mut close): (f32, f32, f32 , f32) = (-1.0, -1.0, -1.0, -1.0);
     let mut volume: usize = 0;
