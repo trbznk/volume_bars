@@ -2,11 +2,13 @@ use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+// TODO: SOURCE_FILE and TARGET_FILE to cli args
 const SOURCE_FILE: &str = "bars.csv";
 const TARGET_FILE: &str = "volume_bars.csv";
 const OHLCV_COLUMNS: &str = "open,high,low,close,volume";
 const BAR_SIZE: usize = 5;
 
+// TODO: add default values to implement kind of empty bars
 #[derive(Debug)]
 struct Bar {
     open: f32,
@@ -53,6 +55,7 @@ fn read_ohlcv(path: &str) -> Vec<Bar> {
     for line in reader.lines() {
         let temp_line = line.unwrap();
         let line_cols: Vec<&str> = temp_line.split(",").collect();
+        // TODO: Bar::from_string()
         bars.push(Bar {
             open: line_cols[0].parse::<f32>().unwrap(),
             high: line_cols[1].parse::<f32>().unwrap(),
@@ -92,6 +95,7 @@ fn main() {
             } else {
                 bars[i].volume = 0;
             }
+            // TODO: is_sign_negative -> is_unset
             if temp_volume_bar.open.is_sign_negative() {
                 temp_volume_bar.open = bars[i].open;
             }
